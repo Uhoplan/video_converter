@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Конвертер видео</title>
+</head>
+<body>
+  <input type="file" id="videoInput" />
+  <button onclick="uploadVideo()">Загрузить</button>
+  <div id="progress">___</div>
+<div id="downloadLink"></div>
+  <script>
+    let taskId = null;
+    const ws = new WebSocket('ws://localhost:8080');
+    // Обработчик сообщений от WebSocket
+    ws.onmessage = (event) => {	
+      const data = JSON.parse(event.data);
+    	console.log(event)
+	  if (data.type === 'progress') {
+        document.getElementById('progress').textContent = 
+          `Прогресс: ${data.progress}%`;
+      }
+	  	if (data.type === 'downloadLink') {
+        document.getElementById('downloadLink').innerHTML = 
+        `
+		<div>
+			<a href="/download/${data.taskId}">Download File</a>	
+		</div>
+		`;   
+		}
+    };
+
+	async function downloadVideo(path){
+		console.log(path)
+		const response = await fetch(path)
+		const blob = await response.blob(); 
+		return blob;
+	}
+    // Загрузка файла
+    async function uploadVideo() {
+      const fileInput = document.getElementById('videoInput');
+      const file = fileInput.files[0];
+      if (!file) return alert('Выберите файл!'); 
+      const formData = new FormData();
+      formData.append('file', file);
+      // Отправляем файл на сервер
+      const response = await fetch('http://localhost:3000/upload', {
+        method: 'POST',
+        body: formData, 
+      });
+      const { taskId } = await response.json();
+      // Отправляем ID задачи на сервер через WebSocket
+      ws.send(JSON.stringify({ taskId }));
+    }
+  </script>
+</body>
+</html>
