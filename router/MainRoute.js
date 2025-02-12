@@ -12,14 +12,14 @@ function deleteFile(file) {
 		if (err) {
 			console.error(err.toString());
 		} else {
-			console.warn(file + " deleted");
+			console.warn(`${file} deleted`);
 		}
 	});
 }
 // Хранилище активных задач конвертации
 const tasks = new Map();
 
-const wss = new WebSocket.Server({ port: process.env.WEB_SOCKET_PORT }); // WebSocket сервер на порту 8080
+const wss = new WebSocket.Server({ port: process.env.WEB_PORT + 1 }); // WebSocket сервер на порту том же что и http
 
 wss.on("connection", (ws) => {
 	console.log("Connection");
@@ -35,6 +35,7 @@ wss.on("connection", (ws) => {
 router.get("/", (req, res) => {
 	res.sendFile(path.join(__dirname, "../index.html"));
 });
+
 router.get("/download/:filename", (req, res) => {
 	const taskId = req.params.filename;
 	if (!tasks.get(taskId).ready) {
@@ -43,14 +44,17 @@ router.get("/download/:filename", (req, res) => {
 	const convertedFile = tasks.get(taskId).downloadLink;
 	const stream = fs.createReadStream(convertedFile);
 	stream.pipe(res).once("close", () => {
-		stream.destroy(); // makesure stream closed, not close if download aborted.
+		stream.destroy();
 		deleteFile(convertedFile);
 	});
 	tasks.delete(taskId);
 });
+
 router.post("/upload", upload.single("file"), async (req, res) => {
-	if (!req.file) {
-		return res.status(400).json({ error: "Файл не загружен" });
+	if (!req.file || req.file.mimetype !== "video/quicktime") {
+		return res
+			.status(400)
+			.send("Invalid file type. Only .mov files are allowed.");
 	}
 	const taskId = crypto.randomUUID();
 	// Создаем задачу и сохраняем в хранилище
@@ -69,4 +73,5 @@ router.post("/upload", upload.single("file"), async (req, res) => {
 		tasks.delete(taskId);
 	}
 });
+
 module.exports = router;

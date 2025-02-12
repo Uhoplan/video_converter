@@ -15,6 +15,16 @@ app.use("/", router);
 
 if (!fs.existsSync("uploads")) fs.mkdirSync("uploads");
 if (!fs.existsSync("converted")) fs.mkdirSync("converted");
+const clienturl = fs.readFile("webset.json", (err) => {
+	if (err) {
+		fs.writeFileSync(
+			"webset.json",
+			`${process.env.WEB_HOST}:${process.env.WEB_SOCKET_PORT}`,
+
+			{ flag: "w" },
+		);
+	}
+});
 
 app.listen(webPort, () => {
 	console.log(

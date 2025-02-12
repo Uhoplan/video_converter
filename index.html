@@ -10,7 +10,9 @@
 <div id="downloadLink"></div>
   <script>
     let taskId = null;
-    const ws = new WebSocket('ws://localhost:8080');
+    const serverPort = window.location.port;
+    const serverUrl = `${window.location.protocol}//${window.location.hostname}:${serverPort}`
+    const ws = new WebSocket(`ws://${window.location.hostname}:${serverPort + 1}`);
     // Обработчик сообщений от WebSocket
     ws.onmessage = (event) => {	
       const data = JSON.parse(event.data);
@@ -30,7 +32,6 @@
     };
 
 	async function downloadVideo(path){
-		console.log(path)
 		const response = await fetch(path)
 		const blob = await response.blob(); 
 		return blob;
@@ -43,7 +44,7 @@
       const formData = new FormData();
       formData.append('file', file);
       // Отправляем файл на сервер
-      const response = await fetch('http://localhost:3000/upload', {
+      const response = await fetch(`${window.location.protocol}//${window.location.hostname}:${serverPort}/upload`, {
         method: 'POST',
         body: formData, 
       });
@@ -52,5 +53,6 @@
       ws.send(JSON.stringify({ taskId }));
     }
   </script>
+
 </body>
 </html>

@@ -41,7 +41,7 @@ const startConver = (file, pathConverted, taskId, tasks) => {
 					task.wsClient.send(
 						JSON.stringify({
 							type: "downloadLink",
-							path: `http://localhost:3000/${pathConverted}`,
+							path: `http://${process.env.WEB_HOST}:${process.env.WEB_PORT}/${pathConverted}`,
 							taskId,
 						}),
 					),
@@ -50,9 +50,9 @@ const startConver = (file, pathConverted, taskId, tasks) => {
 				console.log(`Конвертация ${file} завершена.`);
 			})
 			.on("error", (err, stdout, stderr) => {
-				console.log("An error occurred: " + err.message);
-				console.log("ffmpeg output:\n" + stdout);
-				console.log("ffmpeg stderr:\n" + stderr);
+				console.log(`An error occurred: ${err.message}`);
+				console.log(`ffmpeg output:\n${stdout}`);
+				console.log(`ffmpeg stderr:\n${stderr}`);
 				reject(err);
 			})
 			.run();
